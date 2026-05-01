@@ -36,10 +36,11 @@ def serve_js():
 import webbrowser
 from threading import Timer
 
+with app.app_context():
+    db.create_all()
+
 if __name__ == '__main__':
-    with app.app_context():
-        db.create_all()
-    
+    # Automatically open the browser
     Timer(1.5, lambda: webbrowser.open('http://127.0.0.1:8000/')).start()
     
     app.run(debug=True, port=8000, use_reloader=False)
