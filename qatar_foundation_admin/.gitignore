@@ -1,0 +1,6 @@
+venv/
+__pycache__/
+instance/
+*.pyc
+change_names.py
+patch_js.py

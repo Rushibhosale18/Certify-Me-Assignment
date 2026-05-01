@@ -66,6 +66,76 @@ function checkStrength(val) {
 }
 
 
+
+function loadOpportunities() {
+    fetch('/api/opportunities')
+        .then(res => res.json())
+        .then(data => {
+            const grid = document.querySelector('.opportunities-grid');
+            if (grid) {
+                grid.innerHTML = '';
+                if (data.data.length === 0) {
+                    grid.innerHTML = '<p>No opportunities found.</p>';
+                } else {
+                    data.data.forEach(opp => {
+                        const card = document.createElement('div');
+                        card.className = 'opportunity-card';
+                        
+                        const headerHtml = `
+                            <div class="opportunity-card-header">
+                                <h5>${escapeHtml(opp.name)}</h5>
+                                <div class="opportunity-meta">
+                                    <span><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>${escapeHtml(opp.duration)}</span>
+                                    <span><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>${escapeHtml(opp.start_date)}</span>
+                                </div>
+                            </div>
+                            <p class="opportunity-description">${escapeHtml(opp.description)}</p>
+                        `;
+
+                        const skills = opp.skills.split(',').map(s => s.trim()).filter(Boolean);
+                        const skillsHtml = `<div class="opportunity-skills"><div class="opportunity-skills-label">Skills You'll Gain</div><div class="skills-tags">
+                            ${skills.map(s => `<span class="skill-tag">${escapeHtml(s)}</span>`).join('')}
+                        </div></div>`;
+
+                        const applicantsCount = opp.max_applicants ? `${opp.max_applicants} applicants` : '0 applicants';
+                        const footerHtml = `
+                            <div class="opportunity-footer">
+                                <span class="applicants-count">${escapeHtml(applicantsCount)}</span>
+                                <button class="view-course-btn" style="width: auto; padding: 8px 16px;">View Details</button>
+                                <button class="view-course-btn delete-opp-btn" style="width: auto; padding: 8px 16px; background-color: #dc3545; color: white; margin-left: 8px;" data-id="${opp.id}">Delete</button>
+                            </div>
+                        `;
+
+                        card.innerHTML = headerHtml + skillsHtml + footerHtml;
+
+                        const viewBtn = card.querySelector('.view-course-btn');
+                        viewBtn.addEventListener('click', function() {
+                            openOpportunityDetails(opp.name, {
+                                duration: opp.duration,
+                                startDate: opp.start_date,
+                                description: opp.description,
+                                skills: skills,
+                                applicants: opp.max_applicants || 0,
+                                futureOpportunities: opp.future_opportunities,
+                                prerequisites: ''
+                            });
+                        });
+                        
+                        const delBtn = card.querySelector('.delete-opp-btn');
+                        delBtn.addEventListener('click', function() {
+                            if (confirm('Are you sure you want to delete this opportunity?')) {
+                                fetch('/api/opportunities/' + opp.id, { method: 'DELETE' })
+                                    .then(() => loadOpportunities());
+                            }
+                        });
+
+                        grid.appendChild(card);
+                    });
+                }
+            }
+        });
+}
+
 function showDashboard(email) {
     document.getElementById('authWrapper').style.display = 'none';
     document.getElementById('dashboardWrapper').classList.add('active');
@@ -398,12 +468,29 @@ document.getElementById('opportunityModal').addEventListener('click', function(e
             });
 
             
-            const grid = document.querySelector('.opportunities-grid');
-            if (grid) grid.appendChild(card);
-
-            showToast('Opportunity created successfully!');
-            closeOpportunityModal();
-            this.reset();
+            fetch('/api/opportunities', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    name: name,
+                    duration: duration,
+                    start_date: startDate,
+                    description: description,
+                    skills: skillsRaw,
+                    category: category,
+                    future_opportunities: futureOpportunities,
+                    max_applicants: maxApplicants ? parseInt(maxApplicants, 10) : null
+                })
+            }).then(res => res.json()).then(data => {
+                if (data.status === 'success') {
+                    showToast('Opportunity created successfully!');
+                    closeOpportunityModal();
+                    document.getElementById('opportunityForm').reset();
+                    loadOpportunities();
+                } else {
+                    showToast('Error: ' + data.error);
+                }
+            });
         });
 
         
@@ -647,10 +734,24 @@ document.getElementById('loginForm').addEventListener('submit', function(e) {
 
     if (!valid) { shakeForm('loginForm'); return; }
 
-    showToast('Login successful! Redirecting...');
-    setTimeout(() => showDashboard(email), 1200);
-    generateCaptcha('login');
+    fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email, password: password, remember: document.querySelector('.remember-me input').checked })
+    }).then(res => res.json()).then(data => {
+        if (data.status === 'success') {
+            showToast('Login successful! Redirecting...');
+            setTimeout(() => { showDashboard(email); loadOpportunities(); }, 1200);
+            generateCaptcha('login');
+        } else {
+            showError('loginEmailErr', data.error);
+            shakeForm('loginForm');
+        }
+    }).catch(err => {
+        showToast('Login failed');
+    });
 });
+
 
 
 document.getElementById('signupForm').addEventListener('submit', function(e) {
@@ -671,10 +772,22 @@ document.getElementById('signupForm').addEventListener('submit', function(e) {
     else if (captchaInput !== captchas.signup) { showError('signupCaptchaErr','Captcha does not match.'); valid = false; generateCaptcha('signup'); }
 
     if (!valid) { shakeForm('signupForm'); return; }
-    showToast('Account created successfully!');
-    generateCaptcha('signup');
-    this.reset(); checkStrength('');
-    setTimeout(() => showPage('loginPage'), 1500);
+    
+    fetch('/api/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ full_name: name, email: email, password: password })
+    }).then(res => res.json()).then(data => {
+        if (data.status === 'success') {
+            showToast('Account created successfully!');
+            generateCaptcha('signup');
+            document.getElementById('signupForm').reset(); checkStrength('');
+            setTimeout(() => showPage('loginPage'), 1500);
+        } else {
+            showError('signupEmailErr', data.error);
+            shakeForm('signupForm');
+        }
+    }).catch(err => showToast('Signup failed'));
 });
 
 
@@ -690,9 +803,16 @@ document.getElementById('forgotForm').addEventListener('submit', function(e) {
     else if (captchaInput !== captchas.forgot) { showError('forgotCaptchaErr','Captcha does not match.'); valid = false; generateCaptcha('forgot'); }
 
     if (!valid) { shakeForm('forgotForm'); return; }
-    showToast('Reset link sent to your email!');
-    generateCaptcha('forgot');
-    this.reset();
+    
+    fetch('/api/forgot-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email })
+    }).then(res => res.json()).then(data => {
+        showToast('Reset link sent to your email!');
+        generateCaptcha('forgot');
+        document.getElementById('forgotForm').reset();
+    }).catch(err => showToast('Error'));
 });
 
 
