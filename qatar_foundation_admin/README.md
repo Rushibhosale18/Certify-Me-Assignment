@@ -17,9 +17,9 @@ This repository contains the complete backend implementation for the Qatar Found
 - **Data Persistence:** Replaced all hardcoded mock data with a real SQLite database.
 
 ### 3. Frontend Integration
-- Patched the provided `admin.js` to communicate with the Flask API using the `fetch` API.
+- Patched the provided admin.js to communicate with the Flask API using the fetch API.
 - Implemented dynamic loading to clear demo cards and show real database content upon login.
-- Served the application via Flask `render_template` and `send_from_directory` for a unified full-stack experience.
+- Served the application via Flask render_template and send_from_directory for a unified full-stack experience.
 
 ## 🛠️ Technology Stack
 - **Backend:** Python 3.x, Flask
@@ -30,26 +30,26 @@ This repository contains the complete backend implementation for the Qatar Found
 ## 📋 How to Run
 
 1. **Navigate to the project folder:**
-   ```powershell
+powershell
    cd qatar_foundation_admin
-   ```
+
 
 2. **Initialize the Virtual Environment:**
-   ```powershell
+   powershell
    python -m venv venv
    .\venv\Scripts\activate
-   ```
+   
 
 3. **Install Dependencies:**
-   ```powershell
+  powershell
    pip install -r requirements.txt
-   ```
+ 
 
 4. **Run the Application:**
-   ```powershell
+   powershell
    python app.py
-   ```
-   *The application will automatically open in your default browser at `http://127.0.0.1:8000`.*
+   
+   *The application will automatically open in your default browser at http://127.0.0.1:8000.*
 
 ---
 *Developed as part of the Certify Me Internship Assignment.*
