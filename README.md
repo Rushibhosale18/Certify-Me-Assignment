@@ -5,9 +5,9 @@
 ## 🚀 Getting Started
 
 1. **Clone the provided repository**
-   ```bash
+   bash
    git clone https://github.com/Neerajvs32/Test1.git
-   ```
+  
 
 2. **Create your own GitHub repository**
    - Push the cloned project to your own GitHub account.
@@ -85,9 +85,9 @@ This project is part of the **CertifyMe Full Stack Intern Assessment**. The repo
 
 **Rules**
 - Show generic error on failure:
-  ```
+
   Invalid email or password
-  ```
+
 
 **Expected Result**
 - Redirect to dashboard
@@ -100,7 +100,7 @@ This project is part of the **CertifyMe Full Stack Intern Assessment**. The repo
 | Remember Me checked | Long-lived session |
 | Remember Me unchecked | Session ends when browser closes |
 
----
+
 
 #### US-1.3 — Forgot Password
 
@@ -122,7 +122,7 @@ This project is part of the **CertifyMe Full Stack Intern Assessment**. The repo
 
 > All opportunities must be stored in the database, linked to the logged-in admin, and must never use hardcoded data.
 
----
+
 
 #### US-2.1 — View All Opportunities
 
@@ -168,7 +168,7 @@ This project is part of the **CertifyMe Full Stack Intern Assessment**. The repo
 - Link opportunity to logged-in admin
 - Display immediately **without page refresh**
 
----
+
 
 #### US-2.3 — Opportunities Persist After Login
 
@@ -176,7 +176,6 @@ This project is part of the **CertifyMe Full Stack Intern Assessment**. The repo
 - Stored only in the database — **no local storage usage**
 - Admins cannot access other admins' data
 
----
 
 #### US-2.4 — View Opportunity Details
 
